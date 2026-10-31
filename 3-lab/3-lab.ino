@@ -1,52 +1,62 @@
-int PullReset = 2;      
-int TriggerButton = 3;   
+const int PULL_RESET_PIN = 2;
+const int TRIGGER_BUTTON_PIN = 3;
+const int TRIGGER_NOT_Q_PIN = 4;
+const int TRIGGER_Q_PIN = 5;
+const int LED_FORBIDDEN_PIN = 13;
 
-int TriggerPin = 5;     
-int TriggerPinNotQ = 4;  
+const int SERIAL_RATE = 9600;
+const int LOOP_DELAY = 25;
 
-int LedForbidden = 13;   
+void initPins()
+{
+  pinMode(PULL_RESET_PIN, INPUT);
+  pinMode(TRIGGER_BUTTON_PIN, OUTPUT);
+  digitalWrite(TRIGGER_BUTTON_PIN, LOW);
 
-void setup() {
-  pinMode(PullReset, INPUT);      
-  pinMode(TriggerButton, OUTPUT);
-  digitalWrite(TriggerButton, LOW);
-  
-  pinMode(TriggerPin, INPUT);
-  pinMode(TriggerPinNotQ, INPUT);
+  pinMode(TRIGGER_Q_PIN, INPUT);
+  pinMode(TRIGGER_NOT_Q_PIN, INPUT);
 
-  pinMode(LedForbidden, OUTPUT);
-  digitalWrite(LedForbidden, LOW);
-
-  Serial.begin(9600);
+  pinMode(LED_FORBIDDEN_PIN, OUTPUT);
+  digitalWrite(LED_FORBIDDEN_PIN, LOW);
 }
 
-void loop() {
-  int resetBtn = digitalRead(PullReset);
+void setup()
+{
+  initPins();
+  Serial.begin(SERIAL_RATE);
+}
 
-  if (resetBtn == HIGH) {
-    digitalWrite(TriggerButton, HIGH);
-  } else {
-    digitalWrite(TriggerButton, LOW);
-  }
+void updateTriggerButton()
+{
+  int resetBtn = digitalRead(PULL_RESET_PIN);
+  digitalWrite(TRIGGER_BUTTON_PIN, resetBtn == HIGH ? HIGH : LOW);
+}
 
-  int qState = digitalRead(TriggerPin);
-  int notQState = digitalRead(TriggerPinNotQ);
+int checkForbiddenState(int qState, int notQState)
+{
+  bool isForbidden = (qState == LOW && notQState == LOW);
+  digitalWrite(LED_FORBIDDEN_PIN, isForbidden ? HIGH : LOW);
+  return isForbidden ? 1 : 0;
+}
 
-  int forbidden = 0;
-
-  if (qState == LOW && notQState == LOW) {
-    forbidden = 1;
-    digitalWrite(LedForbidden, HIGH);
-  } else {
-    forbidden = 0;
-    digitalWrite(LedForbidden, LOW);
-  }
+void printTriggerStatus(int qState, int notQState, int forbidden)
+{
   Serial.print("Q:");
   Serial.print(qState);
   Serial.print(" notQ:");
   Serial.print(notQState);
   Serial.print(" Forbidden:");
   Serial.println(forbidden);
+}
 
-  delay(25);
+void loop()
+{
+  updateTriggerButton();
+
+  int qState = digitalRead(TRIGGER_Q_PIN);
+  int notQState = digitalRead(TRIGGER_NOT_Q_PIN);
+  int forbidden = checkForbiddenState(qState, notQState);
+
+  printTriggerStatus(qState, notQState, forbidden);
+  delay(LOOP_DELAY);
 }
