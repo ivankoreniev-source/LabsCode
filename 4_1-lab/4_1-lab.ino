@@ -1,4 +1,4 @@
-const int DATA_PIN = 3;
+const int DATA_PIN = 6;
 const int CLOCK_PIN = 4;
 const int LATCH_PIN = 5;
 
